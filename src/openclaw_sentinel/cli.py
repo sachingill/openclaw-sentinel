@@ -4,6 +4,7 @@ import argparse
 import json
 from typing import List
 
+from .api import run_server_forever
 from .connectors import DatadogConnector, GrafanaConnector
 from .planner import RuleBasedPlanner
 from .policy import PolicyEngine, PolicyRule
@@ -59,9 +60,16 @@ def _demo_service() -> SentinelService:
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run OpenClaw Sentinel demo")
     parser.add_argument("--cycles", type=int, default=1, help="Number of cycles to run")
+    parser.add_argument("--serve", action="store_true", help="Start REST API server")
+    parser.add_argument("--host", default="127.0.0.1", help="Host for --serve")
+    parser.add_argument("--port", type=int, default=8080, help="Port for --serve")
     args = parser.parse_args(argv)
 
     service = _demo_service()
+    if args.serve:
+        run_server_forever(service=service, host=args.host, port=args.port)
+        return 0
+
     summaries = service.run_forever(interval_seconds=0, max_cycles=args.cycles)
 
     payload = {

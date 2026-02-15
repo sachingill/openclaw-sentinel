@@ -9,16 +9,19 @@ OpenClaw Sentinel is a policy-gated 24x7 AI incident operations core with bounde
 
 ## Implemented Modules
 1. Connectors: Datadog/Grafana normalization interfaces
-2. Policy Engine: deny-by-default allowlists and risk thresholds
-3. Control Runtime: cycle runner with approval/block execution paths
-4. Verification: action outcome validation
-5. Reporting: metric store + Datadog/Grafana export shapes
-6. Learning: promotion gate for safe candidate rollout decisions
-7. CLI: demo cycle runner
+2. Live Connectors: API-backed incident ingestion adapters
+3. Policy Engine: deny-by-default allowlists and risk thresholds
+4. Control Runtime: cycle runner with approval/block execution paths
+5. Verification: action outcome validation
+6. Reporting: metric store + Datadog/Grafana export shapes
+7. Learning: promotion gate for safe candidate rollout decisions
+8. API: health/metrics/digest/run-cycle handlers and server
+9. CLI: demo cycle runner and API server launcher
 
 ## Run
 ```bash
 cd /Users/sachingill/project/code/ai/openclaw
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 PYTHONPATH=src python3 -m openclaw_sentinel --cycles 1
+PYTHONPATH=src python3 -m openclaw_sentinel --serve --host 127.0.0.1 --port 8080
 ```
