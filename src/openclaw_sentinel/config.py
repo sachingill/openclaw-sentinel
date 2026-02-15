@@ -4,6 +4,7 @@ import os
 from dataclasses import dataclass
 
 from .models import AutonomyLevel
+from .webhooks import WebhookConfig, WebhookSecrets
 
 
 @dataclass(frozen=True)
@@ -51,4 +52,17 @@ def load_live_config() -> LiveConfig:
         grafana_api_token=_require_env("GRAFANA_API_TOKEN"),
         autonomy_level=levels[level_raw],
         max_risk_score_for_auto=max_risk_score,
+    )
+
+
+def load_webhook_config(tenant_id: str) -> WebhookConfig:
+    default_severity = os.getenv("OPENCLAW_WEBHOOK_DEFAULT_SEVERITY", "medium").strip() or "medium"
+    return WebhookConfig(
+        tenant_id=tenant_id,
+        default_severity=default_severity,
+        secrets=WebhookSecrets(
+            telegram_secret_token=os.getenv("OPENCLAW_TELEGRAM_SECRET_TOKEN", "").strip(),
+            twilio_signature_secret=os.getenv("OPENCLAW_WHATSAPP_SIGNATURE_SECRET", "").strip(),
+            twitter_signature_secret=os.getenv("OPENCLAW_TWITTER_SIGNATURE_SECRET", "").strip(),
+        ),
     )

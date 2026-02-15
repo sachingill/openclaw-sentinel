@@ -23,6 +23,41 @@ class SentinelService:
     verifier: VerificationService
     reporting: ReportingStore = field(default_factory=ReportingStore)
 
+    def _process_incident(self, incident: Incident) -> tuple[int, int, int]:
+        actions_approved = 0
+        actions_blocked = 0
+        actions_succeeded = 0
+        self.reporting.increment("incidents_seen")
+
+        for action, risk in self.planner(incident):
+            decision = self.policy_engine.evaluate(action, risk)
+            if not decision.approved:
+                actions_blocked += 1
+                self.reporting.increment("actions_blocked")
+                self.reporting.increment(f"blocked_reason_{decision.reason}")
+                continue
+
+            actions_approved += 1
+            self.reporting.increment("actions_approved")
+            result = self.executor(action)
+            outcome = self.verifier.verify(action, result)
+            if outcome.success:
+                actions_succeeded += 1
+                self.reporting.increment("actions_succeeded")
+            else:
+                self.reporting.increment("actions_failed")
+        return actions_approved, actions_blocked, actions_succeeded
+
+    def run_incident(self, cycle_id: str, incident: Incident) -> CycleSummary:
+        approved, blocked, succeeded = self._process_incident(incident)
+        return CycleSummary(
+            cycle_id=cycle_id,
+            incidents_seen=1,
+            actions_approved=approved,
+            actions_blocked=blocked,
+            actions_succeeded=succeeded,
+        )
+
     def run_cycle(self, cycle_id: str) -> CycleSummary:
         incidents_seen = 0
         actions_approved = 0
@@ -32,25 +67,10 @@ class SentinelService:
         for connector in self.connectors:
             for incident in connector.fetch_incidents():
                 incidents_seen += 1
-                self.reporting.increment("incidents_seen")
-
-                for action, risk in self.planner(incident):
-                    decision = self.policy_engine.evaluate(action, risk)
-                    if not decision.approved:
-                        actions_blocked += 1
-                        self.reporting.increment("actions_blocked")
-                        self.reporting.increment(f"blocked_reason_{decision.reason}")
-                        continue
-
-                    actions_approved += 1
-                    self.reporting.increment("actions_approved")
-                    result = self.executor(action)
-                    outcome = self.verifier.verify(action, result)
-                    if outcome.success:
-                        actions_succeeded += 1
-                        self.reporting.increment("actions_succeeded")
-                    else:
-                        self.reporting.increment("actions_failed")
+                approved, blocked, succeeded = self._process_incident(incident)
+                actions_approved += approved
+                actions_blocked += blocked
+                actions_succeeded += succeeded
 
         return CycleSummary(
             cycle_id=cycle_id,

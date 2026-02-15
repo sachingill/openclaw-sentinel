@@ -5,12 +5,13 @@ import json
 from typing import List
 
 from .api import run_server_forever
-from .config import load_live_config
+from .config import load_live_config, load_webhook_config
 from .connectors import DatadogConnector, GrafanaConnector
 from .http_clients import DatadogAPIClient, GrafanaAPIClient
 from .live_connectors import LiveDatadogConnector, LiveGrafanaConnector
 from .planner import RuleBasedPlanner
 from .policy import PolicyEngine, PolicyRule
+from .rate_limit import SlidingWindowRateLimiter
 from .service import SentinelService
 from .verification import VerificationService
 from .models import AutonomyLevel
@@ -60,8 +61,8 @@ def _demo_service() -> SentinelService:
     )
 
 
-def _live_service() -> SentinelService:
-    cfg = load_live_config()
+def _live_service(cfg=None) -> SentinelService:
+    cfg = cfg or load_live_config()
     datadog_client = DatadogAPIClient(
         base_url=cfg.datadog_base_url,
         api_key=cfg.datadog_api_key,
@@ -102,11 +103,24 @@ def main(argv: List[str] | None = None) -> int:
     parser.add_argument("--serve", action="store_true", help="Start REST API server")
     parser.add_argument("--host", default="127.0.0.1", help="Host for --serve")
     parser.add_argument("--port", type=int, default=8080, help="Port for --serve")
+    parser.add_argument("--enable-webhooks", action="store_true", help="Enable /webhook/* endpoints")
+    parser.add_argument("--webhook-rate-limit", type=int, default=30, help="Webhook max requests per window")
+    parser.add_argument("--webhook-rate-window", type=int, default=60, help="Webhook rate limit window seconds")
     args = parser.parse_args(argv)
 
-    service = _demo_service() if args.mode == "demo" else _live_service()
+    live_cfg = load_live_config() if args.mode == "live" else None
+    service = _demo_service() if args.mode == "demo" else _live_service(cfg=live_cfg)
     if args.serve:
-        run_server_forever(service=service, host=args.host, port=args.port)
+        webhook_cfg = None
+        limiter = None
+        if args.enable_webhooks:
+            tenant_id = "t1" if args.mode == "demo" else live_cfg.tenant_id
+            webhook_cfg = load_webhook_config(tenant_id=tenant_id)
+            limiter = SlidingWindowRateLimiter(
+                max_requests=args.webhook_rate_limit,
+                window_seconds=args.webhook_rate_window,
+            )
+        run_server_forever(service=service, host=args.host, port=args.port, webhook_cfg=webhook_cfg, limiter=limiter)
         return 0
 
     summaries = service.run_forever(interval_seconds=0, max_cycles=args.cycles)
