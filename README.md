@@ -5,6 +5,8 @@ OpenClaw Sentinel is a policy-gated 24x7 AI incident operations agent.
 ## Documentation
 1. Product spec: `docs/OPENCLAW_SPEC.md`
 2. Delivery levels: `docs/DELIVERY_LEVELS.md`
+3. Installation: `docs/INSTALL.md`
+4. Onboarding: `docs/ONBOARDING.md`
 
 ## Modes
 1. `demo`: runs with seeded sample incidents.

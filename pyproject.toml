@@ -8,6 +8,10 @@ version = "0.1.0"
 description = "Policy-gated 24x7 AI incident operations core"
 requires-python = ">=3.10"
 
+[project.scripts]
+openclaw-sentinel = "openclaw_sentinel.cli:main"
+openclaw-onboarding = "openclaw_sentinel.onboarding:main"
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 
