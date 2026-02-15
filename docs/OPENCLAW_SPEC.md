@@ -1,11 +1,11 @@
-# OpenClaw Product Specification
+# OpenClaw Sentinel Product Specification
 
 Version: v0.1
 Date: 2026-02-15
-Owner: OpenClaw Team
+Owner: OpenClaw Sentinel Team
 
 ## 1. Product Summary
-OpenClaw is a 24x7 AI operations agent for engineering teams that continuously ingests incidents, proposes or executes bounded actions, verifies outcomes, and improves safely through controlled offline learning.
+OpenClaw Sentinel is a 24x7 AI operations agent for engineering teams that continuously ingests incidents, proposes or executes bounded actions, verifies outcomes, and improves safely through controlled offline learning.
 
 Primary outcome: reduce incident triage and resolution effort while preserving strict safety and auditability.
 
@@ -38,7 +38,7 @@ Primary outcome: reduce incident triage and resolution effort while preserving s
 ## 5. Functional Requirements
 
 ### 5.1 Always-On Control Loop
-OpenClaw runs continuously as:
+OpenClaw Sentinel runs continuously as:
 1. Sense: ingest incidents/events continuously.
 2. Decide: classify, prioritize, and propose actions with risk/confidence.
 3. Act: execute only policy-approved actions.

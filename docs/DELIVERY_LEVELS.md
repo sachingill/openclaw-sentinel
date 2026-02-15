@@ -1,4 +1,4 @@
-# OpenClaw Delivery Levels
+# OpenClaw Sentinel Delivery Levels
 
 Date: 2026-02-15
 

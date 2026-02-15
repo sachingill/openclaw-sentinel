@@ -16,7 +16,7 @@ class ReportingStore:
 
     def to_datadog_series(self) -> Dict[str, int]:
         # Placeholder shape used by future Datadog exporter.
-        return {f"openclaw.{k}": v for k, v in self.counters.items()}
+        return {f"openclaw_sentinel.{k}": v for k, v in self.counters.items()}
 
     def to_grafana_labels(self) -> Dict[str, str]:
         # Placeholder shape used by future Prometheus/Grafana exporter.
