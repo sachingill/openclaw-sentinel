@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
+import logging
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Callable
 
 from .rate_limit import SlidingWindowRateLimiter
 from .service import SentinelService
 from .webhooks import WebhookConfig, process_webhook
+
+logger = logging.getLogger("openclaw_sentinel.api")
 
 
 def _json(handler: BaseHTTPRequestHandler, status: int, payload: dict[str, Any]) -> None:
@@ -47,19 +50,24 @@ def handle_webhook(
         return 404, {"error": "not_found"}
 
     source = parts[1].lower()
+    logger.debug("Received webhook source=%s", source)
     identity = headers.get("x-forwarded-for", headers.get("x-real-ip", "unknown"))
     rate_key = f"{source}:{identity}"
     if not limiter.allow(rate_key):
+        logger.warning("Webhook rate limited source=%s identity=%s", source, identity)
         return 429, {"error": "rate_limited"}
 
     try:
         incident = process_webhook(source=source, headers=headers, raw_body=raw_body, cfg=webhook_cfg)
     except PermissionError:
+        logger.warning("Webhook unauthorized source=%s", source)
         return 401, {"error": "unauthorized"}
     except (ValueError, json.JSONDecodeError):
+        logger.warning("Webhook bad request source=%s", source)
         return 400, {"error": "bad_request"}
 
     cycle_id = f"webhook-{source}-{incident.id}"
+    logger.info("Webhook accepted source=%s incident_id=%s", source, incident.id)
     summary = service.run_incident(cycle_id=cycle_id, incident=incident)
     return 202, summary.__dict__
 

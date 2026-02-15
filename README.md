@@ -15,6 +15,7 @@ OpenClaw Sentinel is a policy-gated 24x7 AI incident operations agent.
 cd /Users/sachingill/project/code/ai/openclaw
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 PYTHONPATH=src python3 -m openclaw_sentinel --mode demo --cycles 1
+PYTHONPATH=src python3 -m openclaw_sentinel --mode demo --cycles 2 --cron "*/5 * * * *" --debug --log-file ./openclaw.log
 PYTHONPATH=src python3 -m openclaw_sentinel --mode demo --serve --host 127.0.0.1 --port 8080
 PYTHONPATH=src python3 -m openclaw_sentinel --mode demo --serve --enable-webhooks --webhook-rate-limit 30 --webhook-rate-window 60
 cp .env.example .env

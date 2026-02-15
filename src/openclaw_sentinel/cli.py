@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
+import time
+from datetime import datetime
 from typing import List
 
 from .api import run_server_forever
@@ -12,9 +15,13 @@ from .live_connectors import LiveDatadogConnector, LiveGrafanaConnector
 from .planner import RuleBasedPlanner
 from .policy import PolicyEngine, PolicyRule
 from .rate_limit import SlidingWindowRateLimiter
+from .scheduler import CronSchedule
 from .service import SentinelService
+from .logging_utils import configure_logging
 from .verification import VerificationService
 from .models import AutonomyLevel
+
+logger = logging.getLogger("openclaw_sentinel.cli")
 
 
 def _demo_service() -> SentinelService:
@@ -100,13 +107,17 @@ def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run OpenClaw Sentinel demo")
     parser.add_argument("--mode", choices=["demo", "live"], default="demo", help="Execution mode")
     parser.add_argument("--cycles", type=int, default=1, help="Number of cycles to run")
+    parser.add_argument("--cron", default="", help="Cron expression for scheduled cycle runs (5 fields)")
     parser.add_argument("--serve", action="store_true", help="Start REST API server")
     parser.add_argument("--host", default="127.0.0.1", help="Host for --serve")
     parser.add_argument("--port", type=int, default=8080, help="Port for --serve")
     parser.add_argument("--enable-webhooks", action="store_true", help="Enable /webhook/* endpoints")
     parser.add_argument("--webhook-rate-limit", type=int, default=30, help="Webhook max requests per window")
     parser.add_argument("--webhook-rate-window", type=int, default=60, help="Webhook rate limit window seconds")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logs")
+    parser.add_argument("--log-file", default="", help="Optional log file path")
     args = parser.parse_args(argv)
+    configure_logging(debug=args.debug, log_file=args.log_file or None)
 
     live_cfg = load_live_config() if args.mode == "live" else None
     service = _demo_service() if args.mode == "demo" else _live_service(cfg=live_cfg)
@@ -120,10 +131,25 @@ def main(argv: List[str] | None = None) -> int:
                 max_requests=args.webhook_rate_limit,
                 window_seconds=args.webhook_rate_window,
             )
+        logger.info("Starting API server host=%s port=%s webhooks=%s", args.host, args.port, args.enable_webhooks)
         run_server_forever(service=service, host=args.host, port=args.port, webhook_cfg=webhook_cfg, limiter=limiter)
         return 0
 
-    summaries = service.run_forever(interval_seconds=0, max_cycles=args.cycles)
+    if args.cron:
+        schedule = CronSchedule.parse(args.cron)
+        logger.info("Cron mode enabled schedule=%s cycles=%s", args.cron, args.cycles)
+        summaries = []
+        for i in range(args.cycles):
+            now = datetime.now()
+            next_run = schedule.next_after(now)
+            sleep_seconds = max(0.0, (next_run - now).total_seconds())
+            logger.info("Waiting until next run cycle=%s run_at=%s sleep_seconds=%.3f", i + 1, next_run.isoformat(), sleep_seconds)
+            if sleep_seconds > 0:
+                time.sleep(sleep_seconds)
+            cycle_id = f"cron-{i + 1}"
+            summaries.append(service.run_cycle(cycle_id=cycle_id))
+    else:
+        summaries = service.run_forever(interval_seconds=0, max_cycles=args.cycles)
 
     payload = {
         "summaries": [summary.__dict__ for summary in summaries],
@@ -131,6 +157,7 @@ def main(argv: List[str] | None = None) -> int:
         "datadog_series": service.reporting.to_datadog_series(),
         "grafana_labels": service.reporting.to_grafana_labels(),
     }
+    logger.debug("Execution payload=%s", payload)
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0
 

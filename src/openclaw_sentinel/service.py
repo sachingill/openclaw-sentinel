@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass, field
 from typing import Callable, Iterable, List
@@ -12,6 +13,7 @@ from .verification import VerificationService
 
 PlannerFn = Callable[[Incident], Iterable[tuple[Action, RiskProfile]]]
 ExecutorFn = Callable[[Action], str]
+logger = logging.getLogger("openclaw_sentinel.service")
 
 
 @dataclass
@@ -24,17 +26,20 @@ class SentinelService:
     reporting: ReportingStore = field(default_factory=ReportingStore)
 
     def _process_incident(self, incident: Incident) -> tuple[int, int, int]:
+        logger.debug("Processing incident id=%s source=%s severity=%s", incident.id, incident.source, incident.severity)
         actions_approved = 0
         actions_blocked = 0
         actions_succeeded = 0
         self.reporting.increment("incidents_seen")
 
         for action, risk in self.planner(incident):
+            logger.debug("Planned action id=%s type=%s risk_score=%.3f", action.id, action.action_type, risk.score())
             decision = self.policy_engine.evaluate(action, risk)
             if not decision.approved:
                 actions_blocked += 1
                 self.reporting.increment("actions_blocked")
                 self.reporting.increment(f"blocked_reason_{decision.reason}")
+                logger.info("Blocked action id=%s reason=%s", action.id, decision.reason)
                 continue
 
             actions_approved += 1
@@ -44,11 +49,14 @@ class SentinelService:
             if outcome.success:
                 actions_succeeded += 1
                 self.reporting.increment("actions_succeeded")
+                logger.info("Action success id=%s", action.id)
             else:
                 self.reporting.increment("actions_failed")
+                logger.warning("Action failed id=%s details=%s", action.id, outcome.details)
         return actions_approved, actions_blocked, actions_succeeded
 
     def run_incident(self, cycle_id: str, incident: Incident) -> CycleSummary:
+        logger.info("Running incident cycle id=%s incident=%s", cycle_id, incident.id)
         approved, blocked, succeeded = self._process_incident(incident)
         return CycleSummary(
             cycle_id=cycle_id,
@@ -59,6 +67,7 @@ class SentinelService:
         )
 
     def run_cycle(self, cycle_id: str) -> CycleSummary:
+        logger.info("Starting cycle id=%s", cycle_id)
         incidents_seen = 0
         actions_approved = 0
         actions_blocked = 0
@@ -81,6 +90,7 @@ class SentinelService:
         )
 
     def run_forever(self, interval_seconds: int = 60, max_cycles: int | None = None) -> List[CycleSummary]:
+        logger.info("Running service loop interval_seconds=%s max_cycles=%s", interval_seconds, max_cycles)
         summaries: List[CycleSummary] = []
         cycle = 1
         while True:
