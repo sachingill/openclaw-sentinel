@@ -1,22 +1,14 @@
 # OpenClaw Sentinel
 
-OpenClaw Sentinel is a policy-gated 24x7 AI incident operations core with bounded autonomy, integration-ready ingestion, and safe promotion gates for self-improvement.
+OpenClaw Sentinel is a policy-gated 24x7 AI incident operations agent.
 
-## Objective Coverage
-1. Spec Drafting: complete (`docs/OPENCLAW_SPEC.md`, `docs/DELIVERY_LEVELS.md`)
-2. Test Cases: complete for core safety/runtime flows (`tests/`)
-3. Code Development: runnable MVP core in `src/openclaw_sentinel/`
+## Documentation
+1. Product spec: `docs/OPENCLAW_SPEC.md`
+2. Delivery levels: `docs/DELIVERY_LEVELS.md`
 
-## Implemented Modules
-1. Connectors: Datadog/Grafana normalization interfaces
-2. Live Connectors: API-backed incident ingestion adapters
-3. Policy Engine: deny-by-default allowlists and risk thresholds
-4. Control Runtime: cycle runner with approval/block execution paths
-5. Verification: action outcome validation
-6. Reporting: metric store + Datadog/Grafana export shapes
-7. Learning: promotion gate for safe candidate rollout decisions
-8. API: health/metrics/digest/run-cycle handlers and server
-9. CLI: demo cycle runner and API server launcher
+## Modes
+1. `demo`: runs with seeded sample incidents.
+2. `live`: runs using Datadog and Grafana credentials from environment variables.
 
 ## Run
 ```bash
