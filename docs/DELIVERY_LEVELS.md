@@ -6,7 +6,7 @@ Date: 2026-02-15
 Ship OpenClaw-Sentinel in iterative levels so progress is reviewable every 20 minutes.
 
 ## Level 1: Spec Drafting
-Status: In Progress
+Status: Complete
 
 Scope:
 - Lock v1 boundaries (24x7 control loop, bounded autonomy, reporting).
@@ -23,7 +23,7 @@ Artifacts:
 - `docs/DELIVERY_LEVELS.md`
 
 ## Level 2: Test Cases
-Status: In Progress
+Status: Complete
 
 Scope:
 - Define testable safety invariants before broad code expansion.
@@ -38,9 +38,14 @@ Exit Criteria:
 Artifacts:
 - `tests/test_policy.py`
 - `tests/test_control_loop.py`
+- `tests/test_connectors.py`
+- `tests/test_service.py`
+- `tests/test_learning.py`
+- `tests/test_reporting.py`
+- `tests/test_runtime.py`
 
 ## Level 3: Code Development
-Status: In Progress
+Status: Complete (MVP Core)
 
 Scope:
 - Implement minimal core services:

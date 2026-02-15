@@ -60,3 +60,19 @@ class Decision:
 class LoopResult:
     incident: Incident
     decisions: List[Decision]
+
+
+@dataclass(frozen=True)
+class ActionOutcome:
+    action: Action
+    success: bool
+    details: str
+
+
+@dataclass
+class CycleSummary:
+    cycle_id: str
+    incidents_seen: int
+    actions_approved: int
+    actions_blocked: int
+    actions_succeeded: int
