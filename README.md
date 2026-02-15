@@ -1,10 +1,21 @@
-# OpenClaw
+# OpenClaw Sentinel
 
-OpenClaw is a policy-gated 24x7 AI incident operations agent.
+OpenClaw Sentinel is a policy-gated 24x7 AI incident operations core.
 
-## Spec
-- Product spec: `docs/OPENCLAW_SPEC.md`
+## Current Build Strategy
+Development is split into three levels:
+1. Spec Drafting
+2. Test Cases
+3. Code Development
 
-## Current Status
-- Initial specification drafted.
-- Repository bootstrap in progress.
+See details in `/Users/sachingill/project/code/ai/openclaw/docs/DELIVERY_LEVELS.md`.
+
+## Docs
+- Product spec: `/Users/sachingill/project/code/ai/openclaw/docs/OPENCLAW_SPEC.md`
+- Delivery levels: `/Users/sachingill/project/code/ai/openclaw/docs/DELIVERY_LEVELS.md`
+
+## Quick Start
+```bash
+cd /Users/sachingill/project/code/ai/openclaw
+python3 -m unittest discover -s tests -v
+```
