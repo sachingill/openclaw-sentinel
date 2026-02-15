@@ -22,6 +22,9 @@ OpenClaw Sentinel is a policy-gated 24x7 AI incident operations core with bounde
 ```bash
 cd /Users/sachingill/project/code/ai/openclaw
 PYTHONPATH=src python3 -m unittest discover -s tests -v
-PYTHONPATH=src python3 -m openclaw_sentinel --cycles 1
-PYTHONPATH=src python3 -m openclaw_sentinel --serve --host 127.0.0.1 --port 8080
+PYTHONPATH=src python3 -m openclaw_sentinel --mode demo --cycles 1
+PYTHONPATH=src python3 -m openclaw_sentinel --mode demo --serve --host 127.0.0.1 --port 8080
+cp .env.example .env
+# export env vars from .env in your shell, then:
+PYTHONPATH=src python3 -m openclaw_sentinel --mode live --cycles 1
 ```
